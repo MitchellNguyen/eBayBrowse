@@ -1,111 +1,141 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+//import 'package:xml2json/xml2json.dart';
+import 'package:xml/xml.dart' as xml;
 
-void main() => runApp(MyApp());
+void main() => runApp(new MaterialApp(
+  home: new HomePage(),
+));
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+class HomePage extends StatefulWidget{
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
+  HomePageState createState() => new HomePageState();
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+class HomePageState extends State<HomePage> {
+  // 1. Do i need to make another method that does "construct https url" depending on specific given keywords?
+  // 2. headers -- key???
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+//  var url = "https://svcs.sandbox.ebay.com/services/search/FindingService/v1";
+//  final String url = "https://swapi.co/api/people";
 
-  final String title;
+//  var url = "https://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsByKeywords&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=Mitchell-mitchell-PRD-292e4f543-1891531a&RESPONSE-DATA-FORMAT=XML&REST-PAYLOAD&keywords=harry%20potter%20phoenix";
+  var url = "https://svcs.sandbox.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsByKeywords&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=Mitchell-mitchell-SBX-592e4f49b-0de7be50&RESPONSE-DATA-FORMAT=XML&REST-PAYLOAD&keywords=harry";
+
+  // Todo: SOMETHING WRONG HERE WITH THE BODY format.... maybe needs to be in XML form..
+  Map body = { "findItemsByKeywordsRequest": {"xmlns": "https://www.ebay.com/marketplace/search/v1/services","keywords": "harry potter phoenix","paginationInput": { "entriesPerPage": "2" }}};
+  var data;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  void initState() {
+    super.initState();
+    this.getJsonData();
+//    this.makePostRequest();
   }
+
+//  // for Finding API, we use HTTP POST to submit JSON requests
+//  Future<String> makePostRequest() async {
+//    // set up POST request arguments
+//    String url = 'https://svcs.sandbox.ebay.com/services/search/FindingService/v1';
+//    Map<String, String> headers = {"Content-type": "application/json"};
+//    String json =
+//
+//  }
+
+  Future<http.Response> getJsonData() async {
+    var response = await http.get( // OR POSTT AHHH
+      Uri.encodeFull(url),
+      headers: {  // DO I NEED "content-type" to be json (or do i need it at all??)
+//        "Content-type": "text/xml",
+//        "X-EBAY-SOA-SECURITY-APPNAME": "Mitchell-mitchell-PRD-292e4f543-1891531a",
+        "X-EBAY-SOA-SECURITY-APPNAME": "Mitchell-mitchell-SBX-592e4f49b-0de7be50",
+        "X-EBAY-SOA-OPERATION-NAME": "findItemsByKeywords",
+      },
+      // do i need to insert body: body (when i use post -- to make findByKeyWord request...)
+//      body: jsonEncode(body),
+    );
+
+    var status = response.statusCode;
+    print("hi:  $status");
+
+    print(response.body);
+
+    print("----");
+
+//    // transform response.body from XML into JSON (more manageable data format)
+//    final Xml2Json fileTransformer = Xml2Json(); // create a client transformer
+//    fileTransformer.parse(response.body);
+//
+//    print(response.body);
+
+    // parse through xml
+    var document = xml.parse(response.body);
+    var titles = document.findAllElements('title');
+
+    titles
+      .map((node) => node.text)
+      .forEach(print);
+
+
+    // to print out titles of items, possibly do:
+    //    result["searchResult"]["item"]["title"].......
+
+  }
+
+//  Future<String> getJsonData() async {
+//
+//    var response = await http.get(
+//      Uri.encodeFull(url),
+//      headers: {"Accept": "application/json"}
+//    );
+//
+//    print(response.body);
+//
+//    setState(() {
+//      var convertDataToJson = jsonDecode(response.body);
+//      data = convertDataToJson['results'];
+//    });
+//
+//    return "Success";
+//  }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+    return new Scaffold(
+      appBar: new AppBar(
+        title: new Text("hi"),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+
+
+
+//    return new Scaffold(
+//      appBar: new AppBar(
+//        title: new Text("Hello World"),
+//      ),
+//      body: new ListView.builder(
+//        itemCount: data == null ? 0 : data.length,
+//        itemBuilder: (BuildContext context, int index) {
+//          return new Container(
+//            child: new Center(
+//              child: new Column(
+//                crossAxisAlignment: CrossAxisAlignment.stretch,
+//                children: <Widget>[
+//                  new Card(
+//                    child: new Container(
+//                      child: new Text(data[index]['name']),
+//                      padding: const EdgeInsets.all(20.0)),
+//                  )
+//                ],
+//              )
+//            )
+//          );
+//        },
+//      ),
+//    );
   }
 }
