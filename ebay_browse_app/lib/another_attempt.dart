@@ -1,9 +1,15 @@
+import 'package:ebay_browse_app/item_description_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:rxdart/rxdart.dart';
 import 'package:xml/xml.dart' as xml;
 import 'main.dart';
+
+
+
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class MyAppAttempt extends StatelessWidget {
   @override
@@ -18,173 +24,6 @@ class MyAppAttempt extends StatelessWidget {
   }
 }
 
-// 1. picture
-// 2. title
-// 3. price
-// 4. username of person who posted item
-// 5. location
-// .....
-// 5. further (extra) description about item
-
-class SecondScreen extends StatelessWidget {
-  SecondScreen(this.item);
-
-  final SearchItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    double textWidth = MediaQuery.of(context).size.width*0.8;
-
-//    print('price ' + item.price);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Second Screen"),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(8.0),
-        children: <Widget>[
-          Container(
-            height: 250,
-            child: FittedBox(
-              child: Center(child: Image.network(item.imageUrl)),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 2: title
-//            height: 50,
-            width: textWidth,
-            child: Center(child: Text(
-                item.title,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 30,
-                ),
-            )),
-          ),
-          Container(
-            height: item.subtitle != '' ? 20 : 0, //spacing
-          ),
-          Container(  // ITEM 3: SUBTITLE
-            width: textWidth,
-            child: Text(
-              item.subtitle,
-              style: TextStyle(fontSize: item.subtitle != '' ? 20 : 0),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 4: CATEGORY-NAME
-            width: textWidth,
-            child: Text(
-              'Category: ' + item.categoryName,
-              style: TextStyle(fontSize: 20),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 5: price
-            width: textWidth,
-            child: Text(
-              item.price != '' ? ('Price:  \$' + item.price): ('Price:  (Price not listed)'),
-              style: TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 5: Payment methods
-            width: textWidth,
-            child: Text(
-              item.paymentMethods != '' ? ('Payment Methods:  ' + item.paymentMethods): ('Payment Methods:  (Payment Methods not listed)'),
-              style: TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 4: itemId
-            width: textWidth,
-            child: Text(
-              item.itemId != '' ? ('Item ID: ' + item.itemId): ('Item ID:  (Item ID not listed)'),
-              style: TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 5: productId
-            width: textWidth,
-            child: Text(
-              item.productId != '' ? ('Product ID: ' + item.productId): ('Product ID:  (Product ID not listed)'),
-              style: TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 6: location
-            width: textWidth,
-            child: Text(
-              item.location != null ? ('Location:  ' + item.location): ('Location:  (Location not listed).'),
-              style: TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 5: Shipping Service Cost
-            width: textWidth,
-            child: Text(
-              item.shippingServiceCost != '' ? ('Shipping Service Cost: ' + item.shippingServiceCost): ('Shipping Service Cost:  (Shipping Service Cost not listed)'),
-              style: TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 5: Shipping Type
-            width: textWidth,
-            child: Text(
-              item.shippingType != '' ? ('Shipping Type: ' + item.shippingType): ('Shipping Type:  (Shipping Type not listed)'),
-              style: TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-          Container(
-            height: 20, //spacing
-          ),
-          Container(  // ITEM 5: shipping to locations
-            width: textWidth,
-            child: Text(
-              item.shippingToLocations != '' ? ('Available Shipping Locations: ' + item.shippingToLocations): ('Available Shipping Locations:  (Available Shipping Locations not listed)'),
-              style: TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-        ]
-      ),
-    );
-  }
-}
 
 class MyHomePage extends StatefulWidget {
   // todo: what is "key"??
@@ -219,9 +58,9 @@ class _MyHomePageState extends State<MyHomePage> {
     getSearchResults(text);
   }
 
-  Future<http.Response> getSearchResults(String text) async {
+  Future<http.Response> getSearchResults(String endingUrlText) async {
     var response = await http.get(
-      Uri.encodeFull(url + reformatText(text)),
+      Uri.encodeFull(url + reformatText(endingUrlText)),
       headers: {
         "X-EBAY-SOA-SECURITY-APPNAME": "Mitchell-mitchell-PRD-292e4f543-1891531a",
 //        "X-EBAY-SOA-SECURITY-APPNAME": "Mitchell-mitchell-SBX-592e4f49b-0de7be50",
@@ -232,11 +71,20 @@ class _MyHomePageState extends State<MyHomePage> {
     if (response.statusCode == 200) {
       // parse through xml
       var document = xml.parse(response.body);
+
+      // gather search-results from the current page
       var results = document.findAllElements('item');
       var data = results.toList(); // transform Iterable to a List
 
+
+
 //      print(data[0].runtimeType);
 //      print(document.toXmlString(pretty: true, indent: '\t'));
+//      print(response.body);
+
+
+
+      print(document.findAllElements('paginationOutput'));
 
       for (var i = 0; i < data.length; i++) {
 //        print("hi");
@@ -399,7 +247,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             new TextField(
               decoration: new InputDecoration(
-                hintText: 'Choose a book',
+                hintText: 'Search for an item',
               ),
               onChanged: (string) => (subject.add(string)),
             ),
@@ -413,7 +261,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     onTap: () {
                       Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SecondScreen(_items[index]))
+                          MaterialPageRoute(builder: (context) => ItemDescriptionScreen(_items[index]))
                       );
                     },
                     child: new Card(
@@ -481,3 +329,31 @@ class SearchItem {
     this.paymentMethods = paymentMethods;
   }
 }
+
+/*
+ * REFERENCE for creating an infinite-list of search items (with caching)
+ * <https://proandroiddev.com/flutter-lazy-loading-data-from-network-with-caching-b7486de57f11>
+ */
+class SearchItems {
+  final List<SearchItem> searchItems;
+  final int totalSearchItems;
+  final int pageNumber;
+  final int pageSize;
+
+  SearchItems({this.searchItems, this.totalSearchItems, this.pageNumber, this.pageSize});
+}
+
+abstract class Repository {
+  Future<SearchItem> getSearchItem(int index);
+}
+
+abstract class Cache<T> {
+  Future<T> get(int index);
+  put(int index, T object);
+}
+
+//class CachingRepsoitory extends Repository {
+//  final int pageSize;
+//  final Cache<SearchItem> cache;
+//  final
+//}
