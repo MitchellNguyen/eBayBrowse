@@ -131,17 +131,9 @@ class _SearchListScreenState extends State<SearchListScreen> {
       var paginationOutput = document.findAllElements('paginationOutput').toString();
       totalPages = int.parse(_getNestedTagContent(paginationOutput, '\<totalPages\>', '\<\/totalPages\>'));
 
-      print(paginationOutput);
-      print(totalPages);
-
-
       for (var i = 0; i < firstPageData.length; i++) {
         _addSearchItem(firstPageData[i]);
       }
-
-      print('current page number: ' + currPageNum.toString());
-      print('items list length: ' + _items.length.toString());
-
     } else {
       print('Error occurred with loading search items.');
       _onError();
@@ -173,11 +165,6 @@ class _SearchListScreenState extends State<SearchListScreen> {
       for (var i = 0; i < currPageData.length; i++) {
         _addSearchItem(currPageData[i]);
       }
-
-//      print(response.body);
-      print(document.findAllElements('paginationOutput').toString());
-      print('current page number: ' + currPageNum.toString());
-      print('items list length: ' + _items.length.toString());
     }
   }
 
@@ -314,7 +301,6 @@ class _SearchListScreenState extends State<SearchListScreen> {
       } else {
         reachedEndOfResults = true;
       }
-
     });
   }
 
@@ -329,7 +315,6 @@ class _SearchListScreenState extends State<SearchListScreen> {
    * https://proandroiddev.com/flutter-how-i-built-a-simple-app-in-under-an-hour-from-scratch-and-how-you-can-do-it-too-6d8e7fe6c91b
    * https://github.com/Norbert515/BookSearch/tree/master
    */
-
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -347,7 +332,16 @@ class _SearchListScreenState extends State<SearchListScreen> {
               ),
               onChanged: (string) => (subject.add(string)),
             ),
+            new Container(height: 8),
             _isLoading? new CircularProgressIndicator(): new Container(),
+            /**
+             * if no search results are found, let the user know that there
+             * are no search results
+             **/
+            (_isLoading == false && _items.length == 0 && keywords != '')
+                ? new Text('No results appeared for your search',
+                style: TextStyle(color: Colors.black.withOpacity(0.7)))
+                : new Container(),
             new Expanded(
               child: new ListView.builder(
                 padding: new EdgeInsets.all(8.0),
@@ -368,9 +362,23 @@ class _SearchListScreenState extends State<SearchListScreen> {
                             children: <Widget>[
                               _items[index].imageUrl != null? new Image.network(_items[index].imageUrl): new Container(),
                               new Flexible(
-                                child: new Text('Item #' + (index + 1).toString() + '\n\n' + _items[index].title + '\n\n\$' + _items[index].price,
-                                    maxLines: 10,
-                                    style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: new Column(
+                                  children: <Widget>[
+                                    new Text('Item #' + (index + 1).toString(),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                      )
+                                    ),
+                                    new Text('\n' + _items[index].title,
+                                      maxLines: 10,
+                                      style: TextStyle(fontWeight: FontWeight.bold)
+                                    ),
+                                    new Text('\n\$' + _items[index].price,
+                                      style: TextStyle(fontStyle: FontStyle.italic)
+                                    )
+                                  ]
+                                )
                               ),
                               Icon(Icons.keyboard_arrow_right),
                             ],
@@ -384,7 +392,7 @@ class _SearchListScreenState extends State<SearchListScreen> {
             /**
              * Need to show an indication of when we've reached the end of the search-results list
              */
-            new Center(child: reachedEndOfResults ? Text('No more items to load after Item #' + _items.length.toString()) : null),
+            new Center(child: (_items.length != 0 && reachedEndOfResults) ? Text('No more items to load after Item #' + _items.length.toString()) : null),
           ],
         ),
       ),
