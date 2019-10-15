@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:ebay_browse_app/another_attempt.dart';
+import 'package:ebay_browse_app/search_list_screen.dart';
 
 class ItemDescriptionScreen extends StatelessWidget {
-  ItemDescriptionScreen(this.item);
+  ItemDescriptionScreen(this.item, this.itemNum);
 
   final SearchItem item;
+  final int itemNum;
 
   @override
   Widget build(BuildContext context) {
     double textWidth = MediaQuery.of(context).size.width*0.8;
 
-//    print('price ' + item.price);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text("Second Screen"),
+        title: Text("Description for Item #" + itemNum.toString()),
       ),
       body: ListView(
           padding: const EdgeInsets.all(8.0),
           children: <Widget>[
-            Container(
+            Container( // ITEM 1: image
               height: 250,
               child: FittedBox(
                 child: Center(child: Image.network(item.imageUrl)),
